@@ -151,3 +151,12 @@ docker push \\
     </div>
   );
 }
+
+function Card({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-5">
+      <h3 className="font-semibold mb-3 text-foreground">{title}</h3>
+      {children}
+    </div>
+  );
+}

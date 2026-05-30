@@ -6,16 +6,17 @@ import { DeploymentDiagram } from "@/components/DeploymentDiagram";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Ember Todo — Deploy to AWS ECS" },
+      { title: "Arindam Pal — Node.js on AWS ECS" },
       {
         name: "description",
         content:
-          "A minimal Node.js todo app with a multi-stage Dockerfile, ready to deploy on AWS ECR + ECS.",
+          "A portfolio project by Arindam Pal: a minimal Node.js todo app with a multi-stage Dockerfile, deployed to AWS ECR + ECS.",
       },
-      { property: "og:title", content: "Ember Todo — Deploy to AWS ECS" },
+      { property: "og:title", content: "Arindam Pal — Node.js on AWS ECS" },
       {
         property: "og:description",
-        content: "Black & orange todo app with a complete ECR/ECS deployment diagram.",
+        content:
+          "Black & orange todo app by Arindam Pal with a full ECR/ECS deployment diagram.",
       },
     ],
   }),
@@ -23,15 +24,33 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const year = new Date().getFullYear();
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border">
+    <div className="relative min-h-screen bg-background text-foreground overflow-hidden">
+      {/* ambient background */}
+      <div className="pointer-events-none absolute inset-0 grid-bg opacity-50" />
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-[60vh]"
+        style={{
+          background:
+            "radial-gradient(ellipse 80% 60% at 50% 0%, oklch(0.55 0.22 45 / 0.25), transparent 70%)",
+        }}
+      />
+
+      <header className="relative border-b border-border/60 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Flame className="h-5 w-5 text-primary" />
-            <span className="font-bold tracking-tight">Ember</span>
+          <div className="flex items-center gap-2.5 animate-fade-in">
+            <div className="h-9 w-9 rounded-lg grid place-items-center bg-[var(--gradient-ember)] shadow-glow animate-pulse-glow">
+              <Flame className="h-4.5 w-4.5 text-primary-foreground" />
+            </div>
+            <div className="flex flex-col leading-tight">
+              <span className="font-bold tracking-tight text-sm">Arindam Pal</span>
+              <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                Portfolio
+              </span>
+            </div>
           </div>
-          <nav className="flex items-center gap-4 text-sm text-muted-foreground">
+          <nav className="flex items-center gap-5 text-sm text-muted-foreground">
             <a href="#app" className="hover:text-foreground transition">App</a>
             <a href="#deploy" className="hover:text-foreground transition">Deploy</a>
             <a
@@ -47,30 +66,42 @@ function Index() {
         </div>
       </header>
 
-      <section className="max-w-6xl mx-auto px-6 pt-16 pb-10 text-center">
-        <div className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary/60 px-3 py-1 text-xs text-muted-foreground mb-6">
+      <section className="relative max-w-6xl mx-auto px-6 pt-20 pb-12 text-center">
+        <div className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary/60 px-3 py-1 text-xs text-muted-foreground mb-6 animate-fade-in">
           <Container className="h-3.5 w-3.5 text-primary" />
           Dockerized · Multi-stage build · ECS ready
         </div>
-        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight">
+        <h1
+          className="text-4xl sm:text-6xl font-extrabold tracking-tight animate-fade-in"
+          style={{ animationDelay: "0.1s", animationFillMode: "both" }}
+        >
           A todo app that ships{" "}
-          <span className="bg-clip-text text-transparent bg-[var(--gradient-ember)]">
-            on fire.
-          </span>
+          <span className="text-gradient">on fire.</span>
         </h1>
-        <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
+        <p
+          className="mt-4 text-muted-foreground max-w-xl mx-auto animate-fade-in"
+          style={{ animationDelay: "0.25s", animationFillMode: "both" }}
+        >
           Plain Node + React. No database. Just a clean UI, a battle-tested Dockerfile,
           and a one-command path to AWS ECR + ECS.
         </p>
+        <p
+          className="mt-3 text-xs uppercase tracking-[0.2em] text-muted-foreground animate-fade-in"
+          style={{ animationDelay: "0.4s", animationFillMode: "both" }}
+        >
+          A project by <span className="text-primary font-semibold">Arindam Pal</span>
+        </p>
       </section>
 
-      <section id="app" className="max-w-6xl mx-auto px-6 py-10">
+      <section id="app" className="relative max-w-6xl mx-auto px-6 py-10">
         <TodoApp />
       </section>
 
-      <section id="deploy" className="max-w-6xl mx-auto px-6 py-16">
+      <section id="deploy" className="relative max-w-6xl mx-auto px-6 py-16">
         <div className="mb-6">
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Deployment flow</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            Deployment <span className="text-gradient">flow</span>
+          </h2>
           <p className="text-sm text-muted-foreground mt-1">
             From a git push to a running container on ECS.
           </p>
@@ -111,21 +142,12 @@ docker push \\
         </div>
       </section>
 
-      <footer className="border-t border-border mt-10">
-        <div className="max-w-6xl mx-auto px-6 py-6 text-xs text-muted-foreground flex justify-between">
-          <span>Built with Node + Docker.</span>
+      <footer className="relative border-t border-border mt-10">
+        <div className="max-w-6xl mx-auto px-6 py-6 text-xs text-muted-foreground flex flex-col sm:flex-row gap-2 justify-between">
+          <span>© {year} Arindam Pal · Built with Node + Docker</span>
           <span>Ship it 🔥</span>
         </div>
       </footer>
-    </div>
-  );
-}
-
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-xl border border-border bg-card p-5">
-      <h3 className="font-semibold mb-3 text-foreground">{title}</h3>
-      {children}
     </div>
   );
 }

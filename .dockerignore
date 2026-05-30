@@ -1,0 +1,14 @@
+node_modules
+.output
+.git
+.gitignore
+Dockerfile
+.dockerignore
+README.md
+DEPLOY.md
+.env
+.env.*
+dist
+.vscode
+.idea
+*.log

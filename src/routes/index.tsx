@@ -3,6 +3,15 @@ import { Flame, Github, Container } from "lucide-react";
 import { TodoApp } from "@/components/TodoApp";
 import { DeploymentDiagram } from "@/components/DeploymentDiagram";
 
+function Card({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-5">
+      <h3 className="font-semibold mb-3 text-foreground">{title}</h3>
+      {children}
+    </div>
+  );
+}
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -152,11 +161,3 @@ docker push \\
   );
 }
 
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-xl border border-border bg-card p-5">
-      <h3 className="font-semibold mb-3 text-foreground">{title}</h3>
-      {children}
-    </div>
-  );
-}

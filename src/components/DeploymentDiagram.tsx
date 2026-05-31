@@ -1,6 +1,5 @@
 import { ArrowRight } from "lucide-react";
 import {
-  EC2Icon,
   ECRIcon,
   ECSIcon,
   IAMIcon,
@@ -12,6 +11,7 @@ import {
 type NodeDef = {
   id: string;
   label: string;
+  sub?: string;
   x: number;
   y: number;
   delay: number;
@@ -19,56 +19,76 @@ type NodeDef = {
   render: () => React.ReactNode;
 };
 
+// Clean left-to-right pipeline (top row) with IAM as a side service (bottom).
+// Canvas is 960 x 340.
+const TOP_Y = 110;
+const BOT_Y = 270;
+
 const nodes: NodeDef[] = [
-  { id: "gh", label: "GitHub", x: 60, y: 200, delay: 0, render: () => <GitHubIcon /> },
-  { id: "ec2", label: "EC2", x: 260, y: 200, delay: 0.4, render: () => <EC2Icon /> },
-  { id: "docker", label: "Docker", x: 260, y: 60, delay: 0.8, render: () => <DockerIcon /> },
-  { id: "ecr", label: "ECR", x: 520, y: 60, delay: 1.2, glow: true, render: () => <ECRIcon /> },
-  { id: "iam", label: "IAM", x: 400, y: 200, delay: 1.6, render: () => <IAMIcon /> },
-  { id: "ecs", label: "ECS", x: 640, y: 200, delay: 2.0, glow: true, render: () => <ECSIcon /> },
-  { id: "cw", label: "CloudWatch", x: 820, y: 200, delay: 2.4, render: () => <CloudWatchIcon /> },
+  { id: "gh",     label: "GitHub",     sub: "source",      x: 80,  y: TOP_Y, delay: 0.0, render: () => <GitHubIcon /> },
+  { id: "docker", label: "Docker",     sub: "build image", x: 260, y: TOP_Y, delay: 0.3, render: () => <DockerIcon /> },
+  { id: "ecr",    label: "Amazon ECR", sub: "registry",    x: 460, y: TOP_Y, delay: 0.6, glow: true, render: () => <ECRIcon /> },
+  { id: "ecs",    label: "Amazon ECS", sub: "Fargate",     x: 680, y: TOP_Y, delay: 0.9, glow: true, render: () => <ECSIcon /> },
+  { id: "cw",     label: "CloudWatch", sub: "logs",        x: 880, y: TOP_Y, delay: 1.2, render: () => <CloudWatchIcon /> },
+  { id: "iam",    label: "IAM",        sub: "permissions", x: 570, y: BOT_Y, delay: 1.5, render: () => <IAMIcon /> },
 ];
 
 const pos = Object.fromEntries(nodes.map((n) => [n.id, { x: n.x, y: n.y }]));
+
+const NODE_R = 44; // half tile + label space
 
 function Edge({
   from,
   to,
   label,
   curve = 0,
+  dashed = false,
 }: {
   from: { x: number; y: number };
   to: { x: number; y: number };
   label?: string;
   curve?: number;
+  dashed?: boolean;
 }) {
-  const mx = (from.x + to.x) / 2;
-  const my = (from.y + to.y) / 2 + curve;
-  const d = `M ${from.x} ${from.y} Q ${mx} ${my} ${to.x} ${to.y}`;
+  // shorten endpoints so arrows don't overlap tiles
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const ux = dx / len;
+  const uy = dy / len;
+  const fx = from.x + ux * NODE_R;
+  const fy = from.y + uy * NODE_R;
+  const tx = to.x - ux * NODE_R;
+  const ty = to.y - uy * NODE_R;
+
+  const mx = (fx + tx) / 2;
+  const my = (fy + ty) / 2 + curve;
+  const d = `M ${fx} ${fy} Q ${mx} ${my} ${tx} ${ty}`;
+
   return (
     <g>
-      {/* faint base line */}
       <path
         d={d}
         fill="none"
-        stroke="oklch(0.72 0.19 45 / 0.25)"
+        stroke="oklch(0.72 0.19 45 / 0.22)"
         strokeWidth="1.5"
+        strokeDasharray={dashed ? "4 4" : undefined}
       />
-      {/* animated flowing dashes on top */}
       <path
         d={d}
         fill="none"
         stroke="oklch(0.78 0.19 50)"
-        strokeWidth="1.5"
+        strokeWidth="1.75"
         className="animate-data-flow"
         markerEnd="url(#arrow)"
       />
       {label && (
         <text
           x={mx}
-          y={my - 6}
+          y={my - 8}
           textAnchor="middle"
           className="fill-muted-foreground text-[11px] font-medium"
+          style={{ paintOrder: "stroke", stroke: "oklch(0.18 0.02 40)", strokeWidth: 3 }}
         >
           {label}
         </text>
@@ -82,16 +102,26 @@ export function DeploymentDiagram() {
     <div className="relative w-full rounded-2xl border border-border bg-card p-4 sm:p-6 overflow-hidden">
       <div className="absolute inset-0 grid-bg opacity-40 pointer-events-none" />
 
-      <div className="relative inline-flex items-center gap-2 mb-4 rounded-md border border-border bg-secondary/60 px-3 py-1.5">
-        <ArrowRight className="h-3.5 w-3.5 text-primary" />
-        <span className="text-xs font-medium">Node App Deployment on ECR / ECS</span>
+      <div className="relative flex items-center justify-between mb-4 flex-wrap gap-3">
+        <div className="inline-flex items-center gap-2 rounded-md border border-border bg-secondary/60 px-3 py-1.5">
+          <ArrowRight className="h-3.5 w-3.5 text-primary" />
+          <span className="text-xs font-medium">CI/CD · ECR → ECS Fargate</span>
+        </div>
+        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-1.5 w-4 rounded-full bg-primary" /> image flow
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-1.5 w-4 rounded-full bg-muted-foreground/40" /> auth
+          </span>
+        </div>
       </div>
 
       <div className="relative w-full overflow-x-auto">
-        <div className="relative" style={{ width: 900, height: 300 }}>
+        <div className="relative mx-auto" style={{ width: 960, height: 340 }}>
           <svg
             className="absolute inset-0 w-full h-full pointer-events-none"
-            viewBox="0 0 900 300"
+            viewBox="0 0 960 340"
           >
             <defs>
               <marker
@@ -107,29 +137,15 @@ export function DeploymentDiagram() {
               </marker>
             </defs>
 
-            <Edge from={pos.gh} to={pos.ec2} label="code pull" />
-            <Edge
-              from={{ x: pos.ec2.x, y: pos.ec2.y - 30 }}
-              to={{ x: pos.docker.x, y: pos.docker.y + 30 }}
-              label="image build"
-            />
-            <Edge
-              from={{ x: pos.docker.x + 30, y: pos.docker.y }}
-              to={{ x: pos.ecr.x - 30, y: pos.ecr.y }}
-              label="image push"
-            />
-            <Edge from={pos.iam} to={pos.ec2} />
-            <Edge
-              from={{ x: pos.iam.x + 20, y: pos.iam.y - 20 }}
-              to={{ x: pos.ecr.x, y: pos.ecr.y + 30 }}
-              curve={-40}
-            />
-            <Edge
-              from={{ x: pos.ecr.x, y: pos.ecr.y + 30 }}
-              to={{ x: pos.ecs.x, y: pos.ecs.y - 30 }}
-              label="image pull"
-            />
-            <Edge from={pos.ecs} to={pos.cw} label="logs" />
+            {/* Top pipeline */}
+            <Edge from={pos.gh}     to={pos.docker} label="git pull" />
+            <Edge from={pos.docker} to={pos.ecr}    label="docker push" />
+            <Edge from={pos.ecr}    to={pos.ecs}    label="image pull" />
+            <Edge from={pos.ecs}    to={pos.cw}     label="logs" />
+
+            {/* IAM → ECR / ECS (dashed = auth) */}
+            <Edge from={pos.iam} to={pos.ecr} curve={-30} dashed />
+            <Edge from={pos.iam} to={pos.ecs} curve={-30} dashed />
           </svg>
 
           {nodes.map((n) => (
@@ -139,12 +155,19 @@ export function DeploymentDiagram() {
               style={{ left: n.x, top: n.y, transform: "translate(-50%, -50%)" }}
             >
               <div
-                className={`animate-float ${n.glow ? "rounded-xl animate-pulse-glow" : ""}`}
+                className={`animate-float ${n.glow ? "rounded-2xl animate-pulse-glow" : ""}`}
                 style={{ animationDelay: `${n.delay}s` }}
               >
                 {n.render()}
               </div>
-              <span className="text-xs font-medium text-foreground/90">{n.label}</span>
+              <div className="text-center leading-tight">
+                <div className="text-xs font-semibold text-foreground/90">{n.label}</div>
+                {n.sub && (
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    {n.sub}
+                  </div>
+                )}
+              </div>
             </div>
           ))}
         </div>
